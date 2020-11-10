@@ -88,9 +88,11 @@ module.exports = (events) => {
 		})
 		getFirebaseToken(events)
 	}
-	
-  getAWSServersData()
-	let verifyServers = new CronJob(process.env.ALERTER_CRON || '0 5-59/20 * * * *', () => {
+  
+  const cron = process.env.ALERTER_CRON || '0 5-59/20 * * * *'
+  
+  console.log('Alerter will check for errors following cron:', cron)
+	let verifyServers = new CronJob(cron, () => {
 		getAWSServersData()
 	}, null, true)
 	verifyServers.start()
