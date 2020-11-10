@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  sync:
+    image: spitzerio/aws-monitor
+    command: npm run start
+    deploy:
+      labels:
+        - "aws-monitor"
+      mode: replicated
+      replicas: 1
+    environment:
+      - PORT=
+      - MAIL_HOST=
+      - MAIL_PORT=
+      - MAIL_FROM=
+      - MAIL_PASSWORD=
+      - FIREBASE_CLIENT_EMAIL=
+      - FIREBASE_PRIVATE_KEY=
+      - ALERT_DESTINATIONS=
+      - ALERTER_CRON=
+    ports:
+      - "8001:8001"

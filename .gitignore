@@ -1,0 +1,5 @@
+package-lock.json
+node_modules
+.env
+teste-274112-58732567a57e.json
+docker-compose.yml
