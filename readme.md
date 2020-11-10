@@ -5,6 +5,7 @@ API de monitoramento de servidores EC2 Amazon AWS.
 ## LogStatus bash script example
 
 ```#!/bin/bash
+  #!/bin/bash
 
   DATA="$( (                                                              \
     df;                                                                   \
