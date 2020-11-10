@@ -17,6 +17,6 @@ RUN npm build
 
 COPY --chown=node:node . .
 
-EXPOSE 6666
+EXPOSE 8001
 
 CMD [ "node", "./index.js" ]
