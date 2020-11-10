@@ -4,8 +4,7 @@ API de monitoramento de servidores EC2 Amazon AWS.
 
 ## LogStatus bash script example
 
-``
-  #!/bin/bash
+```#!/bin/bash
 
   DATA="$( (                                                              \
     df;                                                                   \
@@ -23,8 +22,7 @@ API de monitoramento de servidores EC2 Amazon AWS.
 
   curl -k --location --request POST "https://{API-ADDRESS}/aws-monitor/status-set/$CUSTOMER" \
   --header 'Content-Type: application/json' \
-  --data-raw "{\"status\":\"$DATA\"}"
-``
+  --data-raw "{\"status\":\"$DATA\"}"```
 
 ## .env details
 
