@@ -23,6 +23,6 @@ jobs:
     - name: Build the Docker Image 
       run: docker build . --file Dockerfile --tag acampagnaro/aws-monitor
     - name: Push the Docker Image 
-      run: docker push krishnaprasadkv/aws-monitor
+      run: docker push acampagnaro/aws-monitor
       env:
         CI: true
