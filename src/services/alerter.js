@@ -45,7 +45,7 @@ module.exports = (events) => {
 
 				server.filesInfo.map((file) => {
 					// if(!file.size || file.size > ( 200 * 1024 * 1024 )){  // ( MB * MB (size) * KB (size) )
-					if(!file.size || file.size > ( 200 * 2048 * 1024 )){  // ( MB * MB (size) * KB (size) )	
+					if(!file.size || file.size > ( 400 * 1024 * 1024 )){  // ( MB * MB (size) * KB (size) )	
 						if(path.extname(file.name) !== '.mdf' && file.name.split('_')[file.name.split('_').length - 1] !== 'Data'){
 							Errors.push({Alert: 'File Size', Server: server.server, file: file.name, size: humanSize(file.size, 2)})
 						} 
