@@ -45,8 +45,16 @@ module.exports = (events) => {
 
 				server.filesInfo.map((file) => {
 					// if(!file.size || file.size > ( 200 * 1024 * 1024 )){  // ( MB * MB (size) * KB (size) )
+ 						// if(path.extname(file.name) !== '.mdf' && file.name.split('_')[file.name.split('_').length - 1] !== 'Data'){
+					// If file is log and > than 400MB
 					if(!file.size || file.size > ( 400 * 1024 * 1024 )){  // ( MB * MB (size) * KB (size) )	
-						if(path.extname(file.name) !== '.mdf' && file.name.split('_')[file.name.split('_').length - 1] !== 'Data'){
+						if(path.extname(file.name) === '.ldf' || file.name.split('_')[file.name.split('_').length - 1].match(/log/i)){
+							Errors.push({Alert: 'Log_File Size', Server: server.server, file: file.name, size: humanSize(file.size, 2)})
+						} 
+					}
+					// If file isn't log and size > than 10GB
+					if(!file.size || file.size > ( 10 * 1024 * 1024 * 1024 )){  // ( GB * GB (size) * MB (size) * KB (size) )	
+						if(path.extname(file.name) !== '.ldf' && !file.name.split('_')[file.name.split('_').length - 1].match(/log/i)){
 							Errors.push({Alert: 'File Size', Server: server.server, file: file.name, size: humanSize(file.size, 2)})
 						} 
 					}
