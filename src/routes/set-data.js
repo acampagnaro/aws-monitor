@@ -1,12 +1,16 @@
-const { check, validationResult } =  require('express-validator')
-const { getFirebaseToken } = require('../config')
-const database = require('../config/firebase/database')
+// const {} =  require('express-validator')
+// const { getFirebaseToken } = require('../config')
+// const database = require('../config/firebase/database')
+const ServersModel = require('../models/servers')
+const logger = require('../config/logger')
 
-module.exports = async (events, server) => {
-  
+function setData (data) {
+  return ServersModel.findOneAndUpdate({ server: data.server }, data, { upsert: true })
+}
+
+module.exports = async (server) => {
   server.post('/aws-monitor/status-set/:server',[
   ], (req, res) => {
-    
     let status = req.body.status.replace(/[ ]+/g, ' ')
     const serverName = req.params.server
     status = status.split('---break----------------------------------------------------')
@@ -84,29 +88,40 @@ module.exports = async (events, server) => {
       cpuLoadAvg: cpuLoad,
       uptime: uptime,
       host: host,
-      lastSeen: new Date()
     }
 
-    console.log('AWS_MONITOR.SET_DATA:', `Data set: ${serverName}`)
-
-    function setData ( data ) {
-			events.once('tokenReady', (token) => {
-				return database.patch(`/servers/${serverName}.json?access_token=${token}`, data)
-				.then((response) => {
-					res.status(response.status)
-					res.end('Data set.')
-				})
-				.catch((err) => {
-					console.error('AWS_MONITOR.SET_DATA:', err, 'ERROR')
-					res.status(err.status)
-					res.end('Error')
-				})
-			})
-			getFirebaseToken(events)
-    }
+    logger.info('AWS_MONITOR.SET_DATA:', `Data set: ${serverName}`)
 
 		setData(serverInfo)
-    
-  	return server
+      .then((response) => {
+        res.status(200)
+        res.end('Data set.')
+      })
+      .catch((err) => {
+        logger.error('AWS_MONITOR.SET_DATA:', err, 'ERROR')
+        res.status(500)
+        res.end('Error')
+      })
 	})
 }
+
+// ─·─ SET DATA FUNCTION FOR FIREBASE ── KEPT FOR REFERENCE. NO LONGER IN USE ─·─
+//
+// function setData ( data ) {
+//   events.once('tokenReady', (token) => {
+//     return database.patch(`/servers/${serverName}.json?access_token=${token}`, data)
+//     .then((response) => {
+//       res.status(response.status)
+//       res.end('Data set.')
+//     })
+//     .catch((err) => {
+//       logger.error('AWS_MONITOR.SET_DATA:', err, 'ERROR')
+//       res.status(err.status)
+//       res.end('Error')
+//     })
+//   })
+//   getFirebaseToken(events)
+// }
+// setData(serverInfo)
+//
+// ─·─ SET DATA FUNCTION FOR FIREBASE ── KEPT FOR REFERENCE. NO LONGER IN USE ─·─
