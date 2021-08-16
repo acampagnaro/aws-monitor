@@ -1,6 +1,6 @@
 const express = require('express')
 const morgan = require('morgan')
-const cors = require('cors')
+const cors = require('./cors')
 
 require('dotenv/config')
 
@@ -10,7 +10,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
 app.use(morgan('dev'))
-app.use(cors())
+app.use(cors)
 
 app.listen(process.env.PORT, () => console.log(`Everything okay, Running at port: ${process.env.PORT}`))
 
