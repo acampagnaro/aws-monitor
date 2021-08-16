@@ -1,4 +1,4 @@
-export default [
+module.exports = [
   "",
   "http://localhost:8080",
   "https://localhost:8080",
