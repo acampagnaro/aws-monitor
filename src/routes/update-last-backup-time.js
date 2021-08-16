@@ -14,6 +14,6 @@ module.exports = (server) => {
         res.status(500).end('Error')
       })
 
-    res.status(200).send(servers)
+    res.status(200).send()
 	})
 }
