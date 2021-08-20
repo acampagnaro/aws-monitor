@@ -58,6 +58,10 @@ module.exports = () => {
 					} 
 				}
 			})
+
+			if(!server.lastBackup || new Date(server.lastBackup).getTime() < (Date.now() - (13 * 60 * 60 * 1000))) {
+				Errors.push({Alert: 'Last Backup', Server: server.server, lastBackup: server.lastBackup})
+			}
 		})
 				
 		if(Errors.length){

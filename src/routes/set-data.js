@@ -3,14 +3,11 @@
 // const database = require('../config/firebase/database')
 const ServersModel = require('../models/servers')
 const logger = require('../config/logger')
+const { getDnsRecords, updateDnsRecords, createDnsRecords } = require('../services/cloudflare')
 
-function setData (data) {
-  return ServersModel.findOneAndUpdate({ server: data.server }, data, { upsert: true })
-}
-
-module.exports = async (server) => {
+module.exports = (server) => {
   server.post('/aws-monitor/status-set/:server',[
-  ], (req, res) => {
+  ], async (req, res) => {
     let status = req.body.status.replace(/[ ]+/g, ' ')
     const serverName = req.params.server
     status = status.split('---break----------------------------------------------------')
@@ -73,35 +70,121 @@ module.exports = async (server) => {
     const hostname = status[5]
     const hostnamePattern = /[a-zA-Z\-\_\.]+/g
     const hostnameProcessed = hostname.match(hostnamePattern)
+    const ip = status[6]
+    ipProcessed = ip.trim()
     const host = {
       subdomain: hostnameProcessed[0],
-      domain: 'clinic.inf.br'
+      ip: ipProcessed,
     }
 
     const serverInfo = {
       server: serverName,
       mssqlStatus: mssqlStatus,
       diskInfo: diskFree,
-      devMode: false,
       filesInfo: mssqlFiles,
       memory: ramInfo,
       cpuLoadAvg: cpuLoad,
       uptime: uptime,
-      host: host,
+      'host.subdomain': host.subdomain,
+      'host.ip': host.ip,
     }
 
     logger.info('AWS_MONITOR.SET_DATA:', `Data set: ${serverName}`)
 
-		setData(serverInfo)
+    const updatedServer = await ServersModel.findOneAndUpdate({ server: serverInfo.server }, serverInfo, { upsert: true, new: true, useFindAndModify: false })
       .then((response) => {
         res.status(200)
         res.end('Data set.')
+        return response
       })
       .catch((err) => {
         logger.error('AWS_MONITOR.SET_DATA:', err, 'ERROR')
         res.status(500)
         res.end('Error')
       })
+
+    if ( // Check if has server ip and is missing any of cloudflare info
+      updatedServer.host && updatedServer.host.ip
+      && (
+        !updatedServer.host.cloudflare_zone_id
+        || !updatedServer.host.cloudflare_zone_name
+        || !updatedServer.host.cloudflare_dns_record_id
+        || !updatedServer.host.cloudflare_dns_record_content
+      )
+    ) {
+      try {
+        // attempt to find record with server's ip
+        let [record] = await getDnsRecords({ content: updatedServer.host.ip })
+
+        // if record doesn't exists creates one
+        if (!record && updatedServer.host.subdomain) {
+          record = await createDnsRecords({
+            type: 'A',
+            name: updatedServer.host.subdomain,
+            content: updatedServer.host.ip,
+            ttl: 1,
+            proxied: false
+          })
+        }
+
+        // updates server's cloudflare dns info
+        await ServersModel.findByIdAndUpdate(updatedServer._id, {
+          'host.cloudflare_zone_id': record.zone_id,
+          'host.cloudflare_zone_name': record.zone_name,
+          'host.cloudflare_dns_record_id': record.id,
+          'host.cloudflare_dns_record_content': record.content,
+        }, { useFindAndModify: false })
+      } catch (e) {
+        console.log(e.response.data, 'Error updating DNS info')
+      }
+    } else if ( // If has ip and cloudflare info but current ip is different from dns record ip
+      updatedServer.host
+      && updatedServer.host.ip
+      && updatedServer.host.cloudflare_dns_record_content
+      && updatedServer.host.ip !== updatedServer.host.cloudflare_dns_record_content
+    ) {
+      // attempt to update dns record
+      await updateDnsRecords(updatedServer.host.cloudflare_dns_record_id, {
+        type: 'A',
+        name: updatedServer.host.subdomain,
+        content: updatedServer.host.ip,
+        ttl: 1,
+        proxied: false
+      }).catch(async (error) => {
+        if (
+          error.response.data
+          && error.response.data.errors
+          && error.response.data.errors.length
+          && error.response.data.errors[0].code === 81044 // Record doesnt exist, deleted manually
+        ) {
+          try {
+            // attempt to find record with server's ip
+            let [record] = await getDnsRecords({ content: updatedServer.host.ip })
+    
+            // if record doesn't exists creates one
+            if (!record && updatedServer.host.subdomain) {
+              record = await createDnsRecords({
+                type: 'A',
+                name: updatedServer.host.subdomain,
+                content: updatedServer.host.ip,
+                ttl: 1,
+                proxied: false
+              })
+            }
+    
+            // updates server's cloudflare dns info
+            await ServersModel.findByIdAndUpdate(updatedServer._id, {
+              'host.cloudflare_zone_id': record.zone_id,
+              'host.cloudflare_zone_name': record.zone_name,
+              'host.cloudflare_dns_record_id': record.id,
+              'host.cloudflare_dns_record_content': record.content,
+            }, { useFindAndModify: false })
+          } catch (e) {
+            console.log(e.response.data, 'Error updating DNS info')
+          }
+        }
+      })
+    }
 	})
 }
 

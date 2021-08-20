@@ -30,8 +30,12 @@ const servers = new mongoose.Schema({
   },
   uptime: String,
   host: {
+    ip: String,
     subdomain: String,
-    domain: { type: String, default: 'clinic.inf.br' },
+    cloudflare_zone_id: String,
+    cloudflare_zone_name: String,
+    cloudflare_dns_record_id: String,
+    cloudflare_dns_record_content: String,
   },
   lastBackup: Date,
 }, { timestamps: true })

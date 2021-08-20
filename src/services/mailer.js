@@ -22,7 +22,7 @@ module.exports = {
     )
     
     const mailOptions = {
-      from: from || process.env.MAIL_FROM,
+      from: `AWS Monitor <${from || process.env.MAIL_FROM}>`,
       to: to,
       subject: subject || 'NO REPLY',
       text: message,
